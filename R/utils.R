@@ -69,9 +69,8 @@ limpar <- function() {
 classificar <- function(arq, path) {
   plot(magick::image_read(arq))
   letras <- readline(prompt="Letras: ")
-  file.rename(arq, sprintf('%s/%s_%s.png',
-                           ti
-                           path, letras))
+  data_hora <- stringr::str_replace_all(lubridate::now(), "[^0-9]", "")
+  file.rename(arq, sprintf('%s/%s_%s.png', path, data_hora, letras))
 }
 
 #' classificar Captchas

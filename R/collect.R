@@ -13,7 +13,7 @@ download_img <- function(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData
 
   url_img <- "https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha"
 
-  if(!repeat_last_captcha) httr::handle_reset(url_img)
+  if (!repeat_last_captcha) httr::handle_reset(url_img)
   if (!file.exists(dir)) dir.create(dir, recursive = TRUE)
 
   solicitacao <- httr::GET(url_img)
@@ -49,7 +49,8 @@ download_imgs <- function(n, repeat_captcha_n_times = 1, dir = "C:/Users/ap_da/O
 
   repeat_last_captcha <- as.numeric((seq.int(n) - 1) %% repeat_captcha_n_times != 0)
 
-  imagens <- repeat_last_captcha %>% purrr::map(~ baixa_img(dir = dir, sleep = sleep, .x))
+  imagens <- repeat_last_captcha %>%
+    purrr::map(~ baixa_img(dir = dir, sleep = sleep, .x))
 
   return(imagens)
 }
