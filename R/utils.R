@@ -16,17 +16,19 @@ NULL
 #'
 #' @export
 #'
-ler <- function(a) {
-  img <- jpeg::readJPEG(a)
+ler <- function(a, scale = '70%') {
+  tmp <- tempfile(pattern = '.jpeg')
+  magick::image_read(a) %>%
+    magick::image_scale(scale) %>%
+    magick::image_write(tmp)
+  img <- jpeg::readJPEG(tmp)
   img_dim <- dim(img)
   img_df <- tibble::tibble(
     x = rep(1:img_dim[2], each = img_dim[1]),
     y = rep(img_dim[1]:1, img_dim[2]),
-    r = as.vector(img[,,1]),
-    g = as.vector(img[,,2]),
-    b = as.vector(img[,,3])
+    r = as.vector(img)
   )
-  d <- dplyr::mutate(img_df, cor = rgb(r, g, b), id = 1:n())
+  d <- dplyr::mutate(img_df, cor = rgb(r, r, r), id = 1:n())
   d <- dplyr::filter(d, cor != '#FFFFFF')
   d
 }
@@ -49,5 +51,12 @@ desenhar <- function(d) {
 
 
 limpar <- function() {
-
+  # path <- 'caminho/para/captchaTRTData/inst/img'
+  # arqs <- dir(path, full.names = TRUE)
+  # set.seed(1)
+  arqs %>%
+    sample(1) %>%
+    ler() %>%
+    dplyr::filter(r < .7, y <= 25, x <= 95, x >= 12) %>%
+    desenhar()
 }

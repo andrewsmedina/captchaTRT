@@ -1,4 +1,14 @@
-
+#' Download one captcha image from TRT3's website
+#'
+#' Download just one captcha image from TRT3's website
+#'
+#' @param dir character string naming a directory path for writing the image
+#' @param sleep time in seconds for the system wait until next try if the attempt to download fails
+#' @param repeat_last_captcha boolean indicating if the letters of the last captcha download should persist, changing only the noise draws.
+#'
+#' @return response
+#'
+#' @export
 download_img <- function(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData/inst/img", sleep = 1, repeat_last_captcha = FALSE) {
 
   url_img <- "https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha"
@@ -22,6 +32,19 @@ download_img <- function(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData
   return(imagem)
 }
 
+#' Download n captcha images from TRT3's website at once
+#'
+#' Download n captcha images from TRT3's website at once
+#'
+#' @param n number of captchas to download
+#' @param repeat_captcha_n_times number of times that one sequence of letters should be repeated (varying just the noise draws between them)
+#' @param dir character string naming a directory path for writing the image
+#' @param sleep time in seconds for the system wait until next try if the attempt to download fails
+#' @param repeat_last_captcha boolean indicating if the letters of the last captcha download should persist, changing only the noise draws.
+#'
+#' @return response
+#'
+#' @export
 download_imgs <- function(n, repeat_captcha_n_times = 1, dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData/inst/img", sleep = 1) {
 
   repeat_last_captcha <- as.numeric((seq.int(n) - 1) %% repeat_captcha_n_times != 0)
