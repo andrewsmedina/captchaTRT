@@ -91,7 +91,23 @@ desenhar_picote <- function(d) {
     coord_fixed()
 }
 
-#' recebe a saida do 'ler()'
-picotar <- function(d) {
 
+#' classificar Captcha
+#'
+#' adaptada do captchasaj
+#'
+#' @export
+classificar <- function(arq, path) {
+  plot(magick::image_read(arq))
+  letras <- readline(prompt="Letras: ")
+  data_hora <- stringr::str_replace_all(lubridate::now(), "[^0-9]", "")
+  file.rename(arq, sprintf('%s/%s_%s.png', path, data_hora, letras))
+}
+
+#' classificar Captchas
+#'
+#' @export
+classificar_arqs <- function(arqs, path) {
+  dir.create(path, showWarnings = FALSE)
+  for(i in seq_along(arqs)) classificar(arqs[i], path)
 }
