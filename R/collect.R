@@ -42,7 +42,7 @@ download_img <- function(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData
 #' @param sleep time in seconds for the system wait until next try if the attempt to download fails
 #' @param repeat_last_captcha boolean indicating if the letters of the last captcha download should persist, changing only the noise draws.
 #'
-#' @return response
+#' @return list of responses
 #'
 #' @export
 download_imgs <- function(n, repeat_captcha_n_times = 1, dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData/inst/img", sleep = 1) {
