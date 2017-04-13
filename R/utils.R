@@ -60,3 +60,24 @@ limpar <- function() {
     dplyr::filter(r < .7, y <= 25, x <= 95, x >= 12) %>%
     desenhar()
 }
+
+#' classificar Captcha
+#'
+#' adaptada do captchasaj
+#'
+#' @export
+classificar <- function(arq, path) {
+  plot(magick::image_read(arq))
+  letras <- readline(prompt="Letras: ")
+  file.rename(arq, sprintf('%s/%s_%s.png',
+                           ti
+                           path, letras))
+}
+
+#' classificar Captchas
+#'
+#' @export
+classificar_arqs <- function(arqs, path) {
+  dir.create(path, showWarnings = FALSE)
+  for(i in seq_along(arqs)) classificar(arqs[i], path)
+}
