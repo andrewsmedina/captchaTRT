@@ -9,7 +9,7 @@
 #' @return response
 #'
 #' @export
-download_img <- function(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData/inst/img", sleep = 1, repeat_last_captcha = FALSE) {
+download_img <- function(dir, sleep = 1, repeat_last_captcha = FALSE) {
 
   url_img <- "https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha"
 
@@ -45,7 +45,7 @@ download_img <- function(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData
 #' @return list of responses
 #'
 #' @export
-download_imgs <- function(n, repeat_captcha_n_times = 1, dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData/inst/img", sleep = 1) {
+download_imgs <- function(n, repeat_captcha_n_times = 1, dir, sleep = 1) {
 
   repeat_last_captcha <- as.numeric((seq.int(n) - 1) %% repeat_captcha_n_times != 0)
 
