@@ -1,9 +1,9 @@
-#' Tells whether the model broke the captcha
+#' Tells whether the model passed CAPTCHA
 #'
-#' Returns TRUE if the model managed to break the captcha and FALSE otherwise.
-#'   If model is NULL, we ask the user to insert the captcha.
+#' Returns TRUE if the model bypass the CAPTCHA and FALSE otherwise.
+#'   If model is NULL, we ask the user to type the text manually.
 #'
-#' @param model model to predict captcha.
+#' @param model model to predict CAPTCHA.
 #'
 #' @return logical
 #'
@@ -14,19 +14,19 @@ oraculo <- function(model = NULL) {
                 'p_vara' = '184', 'dt_autuacao' = '14/09/2015')
   r_proc <- httr::GET(u_proc, query = query)
   u_captcha <- 'https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha'
-  arq_dir <- tempfile()
-  dir.create(arq_dir)
-  arq_file <- paste0(arq_dir, '/captcha.jpeg')
-  r_captcha <- httr::GET(u_captcha, httr::write_disk(arq_file))
-  # plot(magick::image_read(arq_file))
+  f_dir <- tempfile()
+  dir.create(f_dir)
+  f_file <- paste0(f_dir, '/captcha.jpeg')
+  r_captcha <- httr::GET(u_captcha, httr::write_disk(f_file))
+  # plot(magick::image_read(f_file))
   # scrapr::html_view(r2)
   if (is.null(model)) {
-    plot(magick::image_read(arq_file))
+    plot(magick::image_read(f_file))
     captcha <- readline(prompt = "Captcha: ")
   } else {
-    captcha <- predizer_model(arq_file, model)
+    captcha <- predict_model(f_file, model)
   }
-  dados <- list(
+  form <- list(
     'consultaProcFormForm' = 'consultaProcFormForm',
     'j_id57' = 'true',
     'consultaProcFormDecorate:verifyCaptcha' = captcha,
@@ -42,16 +42,16 @@ oraculo <- function(model = NULL) {
     'javax.faces.ViewState' = get_state(r_processo)
   )
   u_submit <- 'https://pje.trt3.jus.br/consultaprocessual/pages/consultas/CaptchaProcesso.seam'
-  r_submit <- httr::POST(u_submit, body = dados)
+  r_submit <- httr::POST(u_submit, body = form)
   # scrapr::html_view(r_submit)
-  unlink(arq_dir, recursive = TRUE)
-  passou <- r_submit %>%
+  unlink(f_dir, recursive = TRUE)
+  passed <- r_submit %>%
     httr::content('text') %>%
     xml2::read_html() %>%
     rvest::html_node('#panelDetalhesProcesso') %>%
     length() %>%
     magrittr::is_greater_than(0)
-  passou
+  passed
 }
 
 get_state <- function(r) {
@@ -62,6 +62,6 @@ get_state <- function(r) {
     rvest::html_attr('value')
 }
 
-predizer_model <- function(img, model = NULL) {
+predict_model <- function(img, model = NULL) {
   '123456'
 }
