@@ -2,17 +2,17 @@
 % Please edit documentation in R/oraculo.R
 \name{oraculo}
 \alias{oraculo}
-\title{Tells whether the model broke the captcha}
+\title{Tells whether the model passed CAPTCHA}
 \usage{
 oraculo(model = NULL)
 }
 \arguments{
-\item{model}{model to predict captcha.}
+\item{model}{model to predict CAPTCHA.}
 }
 \value{
 logical
 }
 \description{
-Returns TRUE if the model managed to break the captcha and FALSE otherwise.
-  If model is NULL, we ask the user to insert the captcha.
+Returns TRUE if the model bypass the CAPTCHA and FALSE otherwise.
+  If model is NULL, we ask the user to type the text manually.
 }

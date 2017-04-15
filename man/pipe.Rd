@@ -4,9 +4,6 @@
 \alias{\%>\%}
 \title{Pipe operator}
 \usage{
-lhs \%>\% rhs
-}
-\description{
-See \code{\link[magrittr]{\%>\%}} for more details.
+lhs /%>/% rhs
 }
 \keyword{internal}
