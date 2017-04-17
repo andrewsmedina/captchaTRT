@@ -15,20 +15,20 @@ NULL
 #' copiada do captchasaj.
 #'
 #' @export
-#'
 captcha_read <- function(a, scale = '100%') {
-  tmp <- tempfile(pattern = '.jpeg')
-  magick::image_read(a) %>%
-    magick::image_scale(scale) %>%
-    magick::image_write(tmp)
-  img <- jpeg::readJPEG(tmp)
+  # tmp <- tempfile(pattern = '.jpeg')
+  # magick::image_read(a) %>%
+  #   magick::image_scale(scale) %>%
+  #   magick::image_write(tmp)
+  # img <- jpeg::readJPEG(tmp)
+  img <- jpeg::readJPEG(a)
   img_dim <- dim(img)
   img_df <- tibble::tibble(
     x = rep(1:img_dim[2], each = img_dim[1]),
     y = rep(img_dim[1]:1, img_dim[2]),
-    r = as.vector(img)
+    r = as.vector(img[,,1])
   )
-  file.remove(tmp)
+  # file.remove(tmp)
   img_df %>%
     dplyr::mutate(colour = rgb(r, r, r), id = 1:n()) %>%
     dplyr::filter(colour != '#FFFFFF')
@@ -41,6 +41,11 @@ captcha_read <- function(a, scale = '100%') {
 #' @import ggplot2
 #' @export
 captcha_draw <- function(d) {
+  if (tibble::has_name(d, 'g')) {
+    d$colour <- rgb(d$r, d$g, d$b)
+  } else {
+    d$colour <- rgb(d$r, d$r, d$r)
+  }
   p <- ggplot(d, aes(x = x, y = y)) +
     coord_equal() +
     theme_bw() +
@@ -51,13 +56,25 @@ captcha_draw <- function(d) {
 }
 
 captcha_clean <- function(d) {
-  # d %>%
-  #   dplyr::filter(r < .75, y <= 25, x <= 95, x >= 12)
   d %>%
-    dplyr::mutate(x = x - min(x) + 1, y = y - min(y) + 1) %>%
-    dplyr::filter(r < .75, y <= 25, x <= 97, x >= 1)
+    # dplyr::mutate(x = x - min(x) + 1, y = y - min(y) + 1) %>%
+    dplyr::filter(r < .75) %>%
+    dplyr::mutate(x = x - min(x) + 1, y = y - min(y) + 1)
 }
 
+# f <- '~/decryptr/captchaTRTData/inst/img_train/20170412233525_2n73k7.png'
+# lab <- captcha_label(f)
+fs <- dir('~/decryptr/captchaTRTData/inst/img_train', full.names = TRUE)
+set.seed(1)
+f <- sample(fs, 1)
+f %>%
+  captcha_read() %>%
+  captcha_clean() %>%
+  captcha_draw()
+
+captcha_remove_dots <- function() {
+
+}
 
 # a <- download_img(dir = "C:/Users/ap_da/OneDrive/Documents/captchaTRTData/inst/img")
 # library(tidyverse)
@@ -151,6 +168,68 @@ captcha_cut <- function(d, cuts) {
   })
 }
 
+captcha_cut_one <- function(d, ct, lab) {
+
+  list(x1 = ct[-length(ct)], x2 = ct[-1], l = lab) %>%
+    purrr::pmap(~{
+    d %>%
+      dplyr::filter(x > .x, x <= .y) %>%
+      dplyr::mutate(x = x - min(x) + 1) %>% {
+        dd <- .
+        list(x = min(.$x):max(.$x), y = min(.$y):max(.$y)) %>%
+          purrr::cross_df() %>%
+          dplyr::right_join(dd, c('x', 'y'))
+      }
+
+      tidyr::complete(x, y) %>%
+      dplyr::mutate(x = sprintf('x%02d', as.numeric(x))) %>%
+      dplyr::mutate(y = sprintf('y%02d', as.numeric(y))) %>%
+      dplyr::select(x, y, r) %>%
+      tidyr::replace_na(list(r = 0)) %>%
+      tidyr::unite(xy, x, y) %>%
+      dplyr::arrange(xy) %>%
+      tidyr::spread(xy, r, fill = 0)
+  })
+}
+
+captcha_cuts <- function(d, cuts, label) {
+  d_complete <- list(x = min(d$x):max(d$x), y = min(d$y):max(d$y)) %>%
+    purrr::cross_df()
+  v_label <- unlist(strsplit(label, ''))
+
+  purrr::map(cuts, captcha_cut_one)
+
+
+
+
+
+
+  cuts <- width * 0:n_label
+
+  purrr::map2(cuts[-length(cuts)], cuts[-1], ~{
+    d %>%
+      dplyr::filter(x > .x, x <= .y) %>%
+      dplyr::mutate(x = x - min(x) + 1) %>%
+      dplyr::right_join(d_complete, c('x', 'y')) %>%
+      dplyr::mutate(x = sprintf('x%02d', as.numeric(x))) %>%
+      dplyr::mutate(y = sprintf('y%02d', as.numeric(y))) %>%
+      dplyr::select(x, y, r) %>%
+      tidyr::replace_na(list(r = 0)) %>%
+      tidyr::unite(xy, x, y) %>%
+      dplyr::arrange(xy) %>%
+      tidyr::spread(xy, r, fill = 0)
+  })
+
+}
+
+captcha_label <- function(file) {
+  file %>%
+    basename() %>%
+    tools::file_path_sans_ext() %>%
+    stringr::str_match('_([0-9a-z]+)$') %>%
+    magrittr::extract(TRUE, 2)
+}
+
 captcha_trainset_one <- function(data, label) {
   # i <- sample(1:nrow(data), 1)
   # data <- d_captcha$data[[i]]
@@ -177,17 +256,33 @@ aff <- function(x) {
   ids_train <- sample(seq_len(nrow(aff)), round(nrow(aff) * 2 / 3), replace = FALSE)
   aff_train <- aff[ids_train,]
   aff_test <- aff[-ids_train,]
+
   model <- randomForest::randomForest(y ~ . -id_captcha -id_corte, data = aff_train)
 
-  preds <- as.character(predict(model))
+  ## XGBOOST
+  m_xg <- data.matrix(aff_train[, !names(aff_train) %in%
+                                  c('id_captcha', 'id_corte', 'y', 'pred', 'id_letra')])
+  model_xg <- xgboost::xgboost(data = m_xg, label = aff_train$y,
+                               nrounds = 2, objective = 'multi:softmax')
+
+  model_xg <- caret::train(y ~ . -id_captcha -id_corte, data = aff_train,
+                           method = 'xgbTree')
+  preds <- as.character(predict(model_xg, newdata = m_xg))
+  ## XGBOOST
+
+
+  preds <- as.character(predict(model_xg))
   aff_train$pred <- preds
   aff_train_ensemble <- aff_train %>%
     dplyr::select(y, pred, x = id_corte, id_captcha, id_letra) %>%
     tidyr::spread(x, pred, fill = '.', sep = '') %>%
     dplyr::mutate_if(is.character, as.factor)
 
-  model_ensemble <- randomForest::randomForest(y ~ . - id_captcha - id_letra,
-                                               data = aff_train_ensemble)
+  # model_ensemble <- randomForest::randomForest(y ~ . - id_captcha - id_letra,
+  #                                              data = aff_train_ensemble)
+  model_ensemble_xg <- caret::train(y ~ . - id_captcha - id_letra,
+                                    data = aff_train_ensemble,
+                                    method = 'xgbTree')
 
 
   aff_test$pred <- as.character(predict(model, aff_test))
@@ -197,6 +292,9 @@ aff <- function(x) {
     dplyr::mutate_if(is.character, as.factor)
 
   aff_test_ensemble$pred <- predict(model_ensemble, aff_test_ensemble)
+
+  tab <- with(aff_test_ensemble, table(y, pred))
+  sum(diag(tab)) / sum(tab)
 
   with(aff_test_ensemble, table(y, pred)) %>%
     as.data.frame() %>%
