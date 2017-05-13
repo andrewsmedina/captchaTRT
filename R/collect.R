@@ -9,23 +9,36 @@
 #' @return response
 #'
 #' @export
-captcha_download_one <- function(dir, sleep = 1, repeat_last_captcha = FALSE) {
-  url_img <- "https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha"
-  if (!repeat_last_captcha) httr::handle_reset(url_img)
-  if (!file.exists(dir)) dir.create(dir, recursive = TRUE)
-  solicitacao <- httr::GET(url_img)
-  data_hora <- stringr::str_replace_all(lubridate::now(), "[^0-9]", "")
-  if (is.null(dir)) dir <- tempdir()
-  arq <- tempfile(pattern = data_hora, tmpdir = dir)
-  wd_img <- httr::write_disk(paste0(arq, ".jpeg"), overwrite = TRUE)
-  imagem <- httr::GET(url_img, wd_img)
-  while (as.numeric(solicitacao$headers[['content-length']]) < 1) {
-    msg <- sprintf('Something went bad. trying again in %d seconds...', sleep)
-    message(msg)
-    Sys.sleep(sleep)
-    imagem <- httr::GET(url_img, wd_img)
+
+#Codigo anterior:
+#captcha_download_one <- function(dir, sleep = 1, repeat_last_captcha = FALSE) {
+#url_img <- "https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha"
+#if (!repeat_last_captcha) httr::handle_reset(url_img)
+#if (!file.exists(dir)) dir.create(dir, recursive = TRUE)
+#solicitacao <- httr::GET(url_img)
+#data_hora <- stringr::str_replace_all(lubridate::now(), "[^0-9]", "")
+#if (is.null(dir)) dir <- tempdir()
+#arq <- tempfile(pattern = data_hora, tmpdir = dir)
+#wd_img <- httr::write_disk(paste0(arq, ".jpeg"), overwrite = TRUE)
+#imagem <- httr::GET(url_img, wd_img)
+#while (as.numeric(solicitacao$headers[['content-length']]) < 1) {
+#  msg <- sprintf('Something went bad. trying again in %d seconds...', sleep)
+#  message(msg)
+#  Sys.sleep(sleep)
+#  imagem <- httr::GET(url_img, wd_img)
+#}
+#return(imagem)
+#}
+
+captcha_download_one <- function(dest=NULL) {
+  base <- "https://pje.trt3.jus.br/consultaprocessual/seam/resource/captcha"
+  if(is.null(dest)) {
+    dest <- tempfile(pattern = 'captcha', fileext = '.jpeg')
+  } else {
+    dest <- tempfile(pattern = 'captcha', tmpdir = dest, fileext = '.jpeg')
   }
-  return(imagem)
+  httr::GET(base, httr::write_disk(dest, overwrite = TRUE))
+  return(dest)
 }
 
 #' Download n captcha images from TRT3's website at once
